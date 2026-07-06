@@ -142,17 +142,12 @@ class SelectionLayer extends CanvasLayer {
             let height = box[4] * vars.image_shape[1];
             let x = (box[1] * vars.image_shape[0]) - (width / 2);
             let y = (box[2] * vars.image_shape[1]) - (height / 2);
-            ctx.beginPath();
-            ctx.lineWidth = "1";
-            ctx.strokeStyle = "rgb(20, 20, 20)";
-            ctx.rect(x, y, width, height);
-            ctx.stroke();
 
-            ctx.beginPath();
-            ctx.lineWidth = "1";
-            ctx.strokeStyle = "rgb(220, 220, 220)";
-            ctx.rect(x - 1, y - 1, width + 2, height + 2);
-            ctx.stroke();
+            let box_scale = 4 / ctx.getTransform()["a"]
+            ctx.drawImage(document.getElementById("box_top"), x, y, width, box_scale)
+            ctx.drawImage(document.getElementById("box_bottom"), x, y+height-box_scale, width, box_scale)
+            ctx.drawImage(document.getElementById("box_left"), x, y, box_scale, height)
+            ctx.drawImage(document.getElementById("box_right"), x+width-box_scale, y, box_scale, height)
         }
     }
 }
