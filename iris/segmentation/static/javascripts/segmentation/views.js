@@ -148,6 +148,13 @@ class SelectionLayer extends CanvasLayer {
             ctx.drawImage(document.getElementById("box_bottom"), x, y+height-box_scale, width, box_scale)
             ctx.drawImage(document.getElementById("box_left"), x, y, box_scale, height)
             ctx.drawImage(document.getElementById("box_right"), x+width-box_scale, y, box_scale, height)
+
+            let corner_size = 20 / ctx.getTransform()["a"]
+            let corner_offset = corner_size / 2
+            ctx.drawImage(document.getElementById("box_corner"), x-corner_offset, y-corner_offset, corner_size, corner_size)
+            ctx.drawImage(document.getElementById("box_corner"), x-corner_offset, y+height-corner_offset, corner_size, corner_size)
+            ctx.drawImage(document.getElementById("box_corner"), x+width-corner_offset, y-corner_offset, corner_size, corner_size)
+            ctx.drawImage(document.getElementById("box_corner"), x+width-corner_offset, y+height-corner_offset, corner_size, corner_size)
         }
     }
 }
