@@ -990,6 +990,7 @@ function render_preview(){
     for (let layer of vars.vm.getLayers("preview")) {
         layer.render();
     }
+    document.getElementById("mouse_pos_display").innerHTML = "X: " + String(vars.cursor_image[0]) + "<br/> Y: " + String(vars.cursor_image[1])
 }
 
 function render_selected(){
