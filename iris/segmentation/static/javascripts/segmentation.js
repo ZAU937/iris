@@ -212,8 +212,7 @@ function init_events(){
       // Cancel the event as stated by the standard.
       event.preventDefault();
 
-      save_mask();
-      save_yolo();
+    save_mask(save_yolo);
 
       // Chrome requires returnValue to be set.
       event.returnValue = '';
@@ -249,8 +248,7 @@ function key_down(event){
     }else if (key == "Space"){
         show_mask(!vars.show_mask);
     } else if (key == "KeyS"){
-        save_mask();
-        save_yolo();
+        save_mask(save_yolo);
     } else if (key == "Enter"){
         change_saturation(up=false);
     } else if (key == "Backspace"){
@@ -268,11 +266,9 @@ function key_down(event){
     } else if (key == "ArrowDown"){
         change_brightness(up=false);
     } else if (key == "ArrowRight"){
-        save_mask();
-        save_yolo(next_image);
+        save_mask(() => save_yolo(next_image));
     } else if (key == "ArrowLeft"){
-        save_mask();
-        save_yolo(prev_image);
+        save_mask(() => save_yolo(prev_image));
     } else if (key == "KeyX"){
         reset_filters();
     } else if (key == "KeyY"){
@@ -408,8 +404,7 @@ function get_tool_offset(){
 }
 
 async function toggle_cmap() {
-    save_mask()
-    save_yolo()
+    save_mask(save_yolo);
     await fetch(vars.url.segmentation+"/toggle_cmap")
     goto_url(vars.url.segmentation+'?image_id='+vars.image_id);
 }
@@ -1097,8 +1092,7 @@ function login_finished(){
 }
 
 function logout_finished(){
-    save_mask();
-    save_yolo();
+    save_mask(save_yolo);
     goto_url(vars.url.segmentation+'?image_id='+vars.image_id);
 }
 
@@ -1243,8 +1237,8 @@ async function dialogue_choose_image() {
     show_dialogue("info", content, false, "Select an Image to Annotate")
 }
 
-async function switch_to_image(image_id) {
-    goto_url(vars.url.segmentation+'?image_id='+image_id);
+function switch_to_image(image_id) {
+    save_mask(() => save_yolo(() => goto_url(vars.url.segmentation+'?image_id='+image_id)))
 }
 
 async function get_num_images() {
@@ -1520,6 +1514,7 @@ function save_mask(call_afterwards=null){
         || vars.n_user_pixels.total == 0
     ){
         if(call_afterwards !== null){
+            console.log("calling mask after early")
           call_afterwards();
         }
         return;
@@ -1535,6 +1530,7 @@ function save_mask(call_afterwards=null){
     data.set(vars.user_mask, m_length+1);
     data.set(padding, 2*m_length+1);
 
+    console.log("sending save mask request")
     fetch(vars.url.segmentation+"save_mask/" + vars.image_id, {
         method: "POST",
         body: data,
@@ -1545,15 +1541,17 @@ function save_mask(call_afterwards=null){
 }
 
 async function save_mask_finished(response, call_afterwards){
+    console.log("save mask finished")
     fetch_server_update();
 
     if (response.status === 200) {
         show_message('Mask saved', 1000);
         if(call_afterwards !== null){
+            console.log("calling after mask")
           call_afterwards();
         }
     } else {
-        let error = await response.text();
+        let error =  response.text();
         show_dialogue(
             "error",
             "<p>Could not save the mask due to an internal problem!</p>" + error
@@ -1565,11 +1563,13 @@ async function save_yolo(call_afterwards=null) {
     show_message('Saving YOLO file...');
     if (vars.yolo === null){
         if(call_afterwards !== null){
+          console.log("calling yolo after early")
           call_afterwards();
         }
         return;
     }
 
+    console.log("sending save yolo request")
     fetch(vars.url.segmentation+"save_yolo/" + vars.image_id, {
         method: "POST",
         body: vars.yolo,
@@ -1580,15 +1580,17 @@ async function save_yolo(call_afterwards=null) {
 }
 
 async function save_yolo_finished(response, call_afterwards){
+    console.log("save yolo finished")
     fetch_server_update();
 
     if (response.status === 200) {
         show_message('YOLO file saved', 1000);
         if(call_afterwards !== null){
+            console.log("calling after yolo")
           call_afterwards();
         }
     } else {
-        let error = await response.text();
+        let error =  response.text();
         show_dialogue(
             "error",
             "<p>Could not save the YOLO file due to an internal problem!</p>" + error
