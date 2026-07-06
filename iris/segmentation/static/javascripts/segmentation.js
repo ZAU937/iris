@@ -201,6 +201,8 @@ async function init_views(){
 
     // check number of images, disable prev/next buttons if there's only 1
     await get_num_images();
+
+    vars.modified = false;
 }
 
 function init_events(){
@@ -212,7 +214,7 @@ function init_events(){
       // Cancel the event as stated by the standard.
       event.preventDefault();
 
-    save_mask(save_yolo);
+    save_mask(() => save_yolo());
 
       // Chrome requires returnValue to be set.
       event.returnValue = '';
@@ -248,7 +250,7 @@ function key_down(event){
     }else if (key == "Space"){
         show_mask(!vars.show_mask);
     } else if (key == "KeyS"){
-        save_mask(save_yolo);
+        save_mask(() => save_yolo(() => {vars.modified = false;}));
     } else if (key == "Enter"){
         change_saturation(up=false);
     } else if (key == "Backspace"){
@@ -404,7 +406,7 @@ function get_tool_offset(){
 }
 
 async function toggle_cmap() {
-    save_mask(save_yolo);
+    save_mask(() => save_yolo());
     await fetch(vars.url.segmentation+"/toggle_cmap")
     goto_url(vars.url.segmentation+'?image_id='+vars.image_id);
 }
@@ -839,6 +841,7 @@ function user_draws_on_mask(){
     update_history();
 
     vars.show_dialogue_before_next_image = true;
+    vars.modified = true;
 }
 
 function update_bounding_box() {
@@ -875,6 +878,8 @@ function create_bounding_box() {
         // current masks to the history
         discard_future();
         update_history();
+
+        vars.modified = true;
     }
 }
 
@@ -1045,6 +1050,8 @@ function delete_bounding_box() {
 
     discard_future();
     update_history();
+
+    vars.modified = true;
 }
 
 // TODO: how to get the action_id without sending an additional request?
@@ -1092,7 +1099,7 @@ function login_finished(){
 }
 
 function logout_finished(){
-    save_mask(save_yolo);
+    save_mask(() => save_yolo());
     goto_url(vars.url.segmentation+'?image_id='+vars.image_id);
 }
 
@@ -1512,7 +1519,9 @@ function save_mask(call_afterwards=null){
     if (vars.mask === null
         || vars.user_mask === null
         || vars.n_user_pixels.total == 0
+        || ! vars.modified
     ){
+        console.log("SKIPPING")
         if(call_afterwards !== null){
             console.log("calling mask after early")
           call_afterwards();
@@ -1561,7 +1570,9 @@ async function save_mask_finished(response, call_afterwards){
 
 async function save_yolo(call_afterwards=null) {
     show_message('Saving YOLO file...');
-    if (vars.yolo === null){
+    console.log(vars.yolo, vars.modified)
+    if (vars.yolo === null || ! vars.modified){
+        console.log("SKIPPING")
         if(call_afterwards !== null){
           console.log("calling yolo after early")
           call_afterwards();
