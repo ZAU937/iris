@@ -437,38 +437,33 @@ function mouse_move(event){
             vars.cursor_image[1]-vars.drag_start[1]
         );
     }
+    // else if resizing has been started
     else if (vars.resizing_corner != null) {
         if (vars.resizing_corner == 0) {
             vars.box_start = [...vars.cursor_image];
-            update_bounding_box();
         }
         else if (vars.resizing_corner == 1) {
-            vars.box_start = [vars.box_start[0], vars.cursor_image[1]];
-            vars.box_end = [vars.cursor_image[0], vars.box_end[1]];
-            update_bounding_box();
-        }
-        else if (vars.resizing_corner == 2) {
             vars.box_start = [vars.cursor_image[0], vars.box_start[1]];
             vars.box_end = [vars.box_end[0], vars.cursor_image[1]];
-            update_bounding_box();
+        }
+        else if (vars.resizing_corner == 2) {
+            vars.box_start = [vars.box_start[0], vars.cursor_image[1]];
+            vars.box_end = [vars.cursor_image[0], vars.box_end[1]];
         }
         else if (vars.resizing_corner == 3) {
             vars.box_end = [...vars.cursor_image];
-            update_bounding_box();
         }
     }
     // mouse left button must be pressed to draw
     else if (event.buttons == 1 && vars.tool.type != 'move'){
         if (vars.tool.type == "bbox") {
             vars.box_end = [...vars.cursor_image];
-            update_bounding_box();
         }
         else {
             vars.box_end = null;
             user_draws_on_mask();
         }
     }
-    console.log(vars.box_start, vars.box_end)
 
     // Show a preview of the pencil:
     render_preview();
@@ -489,22 +484,20 @@ function mouse_down(event){
             let box = vars.yolo[vars.selected_box]
             let width = box[3] * vars.image_shape[0];
             let height = box[4] * vars.image_shape[1];
-            let x1 = (box[1] * vars.image_shape[0]) - (width / 2);
-            let y1 = (box[2] * vars.image_shape[1]) - (height / 2);
-            let x2 = (box[1] * vars.image_shape[0]) + (width / 2);
-            let y2 = (box[2] * vars.image_shape[1]) + (height / 2);
-            let corners = [[x1, y1], [x1, y2], [x2, y1], [x2, y2]];
+            let x0 = (box[1] * vars.image_shape[0]) - (width / 2);
+            let y0 = (box[2] * vars.image_shape[1]) - (height / 2);
+            let x1 = (box[1] * vars.image_shape[0]) + (width / 2);
+            let y1 = (box[2] * vars.image_shape[1]) + (height / 2);
+            let corners = [[x0, y0], [x0, y1], [x1, y0], [x1, y1]];
             let canvas = document.getElementsByClassName("view-canvas")[0];
             let ctx = canvas.getContext('2d');
-            console.log("checking corners")
             for (let i=0; i<corners.length; i++) {
                 corner = corners[i]
                 if (distance(vars.cursor_image[0], vars.cursor_image[1], corner[0], corner[1]) <= 10 / ctx.getTransform()["a"]) {
                     hit_corner = true;
-                    console.log("corner " + i + " hit")
                     vars.resizing_corner = i;
-                    vars.box_start = [x1, y1];
-                    vars.box_end = [x2, y2];
+                    vars.box_start = [x0, y0];
+                    vars.box_end = [x1, y1];
                     break;
                 }
             }
@@ -903,13 +896,6 @@ function user_draws_on_mask(){
     vars.modified = true;
 }
 
-function update_bounding_box() {
-    let coords = get_canvas_coordinates();
-    let x_start = coords[0]
-    let y_start = coords[2]
-    vars.box_end = [x_start, y_start]
-}
-
 function create_bounding_box() {
     /*Add bounding box to mask*/
 
@@ -922,7 +908,6 @@ function create_bounding_box() {
         let y1 = Math.max(vars.box_start[1], vars.box_end[1]);
 
         let class_id;
-        console.log(vars.selected_box)
         // if resizing an existing box, get its class from the YOLO list and erase its old area from the mask
         if (vars.resizing_corner != null) {
             class_id = vars.yolo[vars.selected_box][0] + 1
@@ -946,17 +931,14 @@ function create_bounding_box() {
 
         let box_area = [x, y, width, height];
 
-        console.log(vars.yolo)
         // if resizing a box, replace its entry in the YOLO list
         if (vars.resizing_corner != null) {
-            console.log("changing yolo data to " + [class_id-1, ...box_area])
             vars.yolo[vars.selected_box] = [class_id-1, ...box_area]
         }
         // else, its a new box, add a new entry to the YOLO list
         else {
             if (vars.current_class > 0) vars.yolo.push([vars.current_class - 1, ...box_area]);
         }
-        console.log(vars.yolo)
 
         // Part of the history (undo-redo) system. When new pixels are drawn, we
         // delete all saved future elements in the history stack and add the
