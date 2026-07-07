@@ -1529,9 +1529,7 @@ function save_mask(call_afterwards=null){
         || vars.n_user_pixels.total == 0
         || ! vars.modified
     ){
-        console.log("SKIPPING")
         if(call_afterwards !== null){
-            console.log("calling mask after early")
           call_afterwards();
         }
         return;
@@ -1547,7 +1545,6 @@ function save_mask(call_afterwards=null){
     data.set(vars.user_mask, m_length+1);
     data.set(padding, 2*m_length+1);
 
-    console.log("sending save mask request")
     fetch(vars.url.segmentation+"save_mask/" + vars.image_id, {
         method: "POST",
         body: data,
@@ -1558,14 +1555,12 @@ function save_mask(call_afterwards=null){
 }
 
 async function save_mask_finished(response, call_afterwards){
-    console.log("save mask finished")
     fetch_server_update();
 
     if (response.status === 200) {
         hide_dialogue();
         show_message('Mask saved', 1000);
         if(call_afterwards !== null){
-            console.log("calling after mask")
           call_afterwards();
         }
     } else {
@@ -1586,18 +1581,14 @@ async function save_yolo(call_afterwards=null) {
         "<div>Please Wait...</div>" +
         "</div>"
     show_dialogue("info", dialogue_content, true, "Saving YOLO...");
-    
-    console.log(vars.yolo, vars.modified)
+
     if (vars.yolo === null || ! vars.modified){
-        console.log("SKIPPING")
         if(call_afterwards !== null){
-          console.log("calling yolo after early")
           call_afterwards();
         }
         return;
     }
 
-    console.log("sending save yolo request")
     fetch(vars.url.segmentation+"save_yolo/" + vars.image_id, {
         method: "POST",
         body: vars.yolo,
@@ -1608,14 +1599,12 @@ async function save_yolo(call_afterwards=null) {
 }
 
 async function save_yolo_finished(response, call_afterwards){
-    console.log("save yolo finished")
     fetch_server_update();
 
     if (response.status === 200) {
         hide_dialogue();
         show_message('YOLO file saved', 1000);
         if(call_afterwards !== null){
-            console.log("calling after yolo")
           call_afterwards();
         }
     } else {
