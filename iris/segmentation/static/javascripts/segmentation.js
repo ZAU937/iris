@@ -201,6 +201,8 @@ async function init_views(){
 
     // check number of images, disable prev/next buttons if there's only 1
     await get_num_images();
+
+    vars.modified = false;
 }
 
 function init_events(){
@@ -212,8 +214,7 @@ function init_events(){
       // Cancel the event as stated by the standard.
       event.preventDefault();
 
-      save_mask();
-      save_yolo();
+    save_mask(() => save_yolo());
 
       // Chrome requires returnValue to be set.
       event.returnValue = '';
@@ -249,8 +250,7 @@ function key_down(event){
     }else if (key == "Space"){
         show_mask(!vars.show_mask);
     } else if (key == "KeyS"){
-        save_mask();
-        save_yolo();
+        save_mask(() => save_yolo(() => {vars.modified = false;}));
     } else if (key == "Enter"){
         change_saturation(up=false);
     } else if (key == "Backspace"){
@@ -268,11 +268,9 @@ function key_down(event){
     } else if (key == "ArrowDown"){
         change_brightness(up=false);
     } else if (key == "ArrowRight"){
-        save_mask();
-        save_yolo(next_image);
+        save_mask(() => save_yolo(next_image));
     } else if (key == "ArrowLeft"){
-        save_mask();
-        save_yolo(prev_image);
+        save_mask(() => save_yolo(prev_image));
     } else if (key == "KeyX"){
         reset_filters();
     } else if (key == "KeyY"){
@@ -408,8 +406,7 @@ function get_tool_offset(){
 }
 
 async function toggle_cmap() {
-    save_mask()
-    save_yolo()
+    save_mask(() => save_yolo());
     await fetch(vars.url.segmentation+"/toggle_cmap")
     goto_url(vars.url.segmentation+'?image_id='+vars.image_id);
 }
@@ -844,6 +841,7 @@ function user_draws_on_mask(){
     update_history();
 
     vars.show_dialogue_before_next_image = true;
+    vars.modified = true;
 }
 
 function update_bounding_box() {
@@ -880,6 +878,8 @@ function create_bounding_box() {
         // current masks to the history
         discard_future();
         update_history();
+
+        vars.modified = true;
     }
 }
 
@@ -1050,6 +1050,8 @@ function delete_bounding_box() {
 
     discard_future();
     update_history();
+
+    vars.modified = true;
 }
 
 // TODO: how to get the action_id without sending an additional request?
@@ -1097,8 +1099,7 @@ function login_finished(){
 }
 
 function logout_finished(){
-    save_mask();
-    save_yolo();
+    save_mask(() => save_yolo());
     goto_url(vars.url.segmentation+'?image_id='+vars.image_id);
 }
 
@@ -1243,8 +1244,8 @@ async function dialogue_choose_image() {
     show_dialogue("info", content, false, "Select an Image to Annotate")
 }
 
-async function switch_to_image(image_id) {
-    goto_url(vars.url.segmentation+'?image_id='+image_id);
+function switch_to_image(image_id) {
+    save_mask(() => save_yolo(() => goto_url(vars.url.segmentation+'?image_id='+image_id)))
 }
 
 async function get_num_images() {
@@ -1513,11 +1514,20 @@ function dialogue_before_next_image_save_and_continue(action_id){
 
 function save_mask(call_afterwards=null){
     show_message('Saving mask...');
+    let dialogue_content = "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center;'>" +
+        "<img src='"+vars.url.segmentation+"/static/icons/loading.gif' />" +
+        "</div>" +
+        "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center; margin-top: 20px;'>" +
+        "<div>Please Wait...</div>" +
+        "</div>"
+    show_dialogue("info", dialogue_content, true, "Saving Mask...");
+
     // Do not save any masks if they have not been loaded yet
     let abort_save = false;
     if (vars.mask === null
         || vars.user_mask === null
         || vars.n_user_pixels.total == 0
+        || ! vars.modified
     ){
         if(call_afterwards !== null){
           call_afterwards();
@@ -1548,12 +1558,13 @@ async function save_mask_finished(response, call_afterwards){
     fetch_server_update();
 
     if (response.status === 200) {
+        hide_dialogue();
         show_message('Mask saved', 1000);
         if(call_afterwards !== null){
           call_afterwards();
         }
     } else {
-        let error = await response.text();
+        let error =  response.text();
         show_dialogue(
             "error",
             "<p>Could not save the mask due to an internal problem!</p>" + error
@@ -1563,7 +1574,15 @@ async function save_mask_finished(response, call_afterwards){
 
 async function save_yolo(call_afterwards=null) {
     show_message('Saving YOLO file...');
-    if (vars.yolo === null){
+    let dialogue_content = "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center;'>" +
+        "<img src='"+vars.url.segmentation+"/static/icons/loading.gif' />" +
+        "</div>" +
+        "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center; margin-top: 20px;'>" +
+        "<div>Please Wait...</div>" +
+        "</div>"
+    show_dialogue("info", dialogue_content, true, "Saving YOLO...");
+
+    if (vars.yolo === null || ! vars.modified){
         if(call_afterwards !== null){
           call_afterwards();
         }
@@ -1583,12 +1602,13 @@ async function save_yolo_finished(response, call_afterwards){
     fetch_server_update();
 
     if (response.status === 200) {
+        hide_dialogue();
         show_message('YOLO file saved', 1000);
         if(call_afterwards !== null){
           call_afterwards();
         }
     } else {
-        let error = await response.text();
+        let error =  response.text();
         show_dialogue(
             "error",
             "<p>Could not save the YOLO file due to an internal problem!</p>" + error

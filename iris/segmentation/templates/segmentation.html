@@ -51,6 +51,7 @@
             'shift_down': false,
             'selected_box': null,
             'current_view': null,
+            'modified': false,
         };
 
         async function next_image(){
@@ -78,13 +79,13 @@
 {% endblock %}
 {% block content %}
     <ul class='toolbar' id="toolbar" style="visibility: hidden;">
-        <li class="toolbutton icon_button" id='tb_previous_image' onclick="save_mask();save_yolo(prev_image);">
+        <li class="toolbutton icon_button" id='tb_previous_image' onclick="save_mask(() => save_yolo(prev_image));">
             <img src={{url_for('segmentation.static', filename='icons/previous.png')}} class="icon" id="prev_button">
         </li>
-        <li class="toolbutton icon_button" id='tb_next_image' onclick="save_mask();save_yolo(next_image);">
+        <li class="toolbutton icon_button" id='tb_next_image' onclick="save_mask(() => save_yolo(next_image));">
             <img src={{url_for('segmentation.static', filename='icons/next.png')}} class="icon" id="next_button" />
         </li>
-        <li class="toolbutton icon_button" id='tb_save_mask' onclick="save_mask();save_yolo()">
+        <li class="toolbutton icon_button" id='tb_save_mask' onclick="save_mask(() => save_yolo());">
             <img src={{url_for('segmentation.static', filename='icons/save_mask.png')}} class="icon" />
         </li>
         <li class="toolbutton icon_button" id='tb_undo' onclick="undo();">
