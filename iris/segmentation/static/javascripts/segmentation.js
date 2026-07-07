@@ -437,6 +437,26 @@ function mouse_move(event){
             vars.cursor_image[1]-vars.drag_start[1]
         );
     }
+    else if (vars.resizing_corner != null) {
+        if (vars.resizing_corner == 0) {
+            vars.box_start = [...vars.cursor_image];
+            update_bounding_box();
+        }
+        else if (vars.resizing_corner == 1) {
+            vars.box_start = [vars.box_start[0], vars.cursor_image[1]];
+            vars.box_end = [vars.cursor_image[0], vars.box_end[1]];
+            update_bounding_box();
+        }
+        else if (vars.resizing_corner == 2) {
+            vars.box_start = [vars.cursor_image[0], vars.box_start[1]];
+            vars.box_end = [vars.box_end[0], vars.cursor_image[1]];
+            update_bounding_box();
+        }
+        else if (vars.resizing_corner == 3) {
+            vars.box_end = [...vars.cursor_image];
+            update_bounding_box();
+        }
+    }
     // mouse left button must be pressed to draw
     else if (event.buttons == 1 && vars.tool.type != 'move'){
         if (vars.tool.type == "bbox") {
@@ -448,6 +468,7 @@ function mouse_move(event){
             user_draws_on_mask();
         }
     }
+    console.log(vars.box_start, vars.box_end)
 
     // Show a preview of the pencil:
     render_preview();
@@ -455,10 +476,45 @@ function mouse_move(event){
 
 function mouse_down(event){
     update_cursor_coords(this, event);
+    let hit_corner = false;
 
-    // if mouse button 2 or 3 were pressed (or mb1 + shift) begin move
-    if (vars.tool.type == "move" || event.buttons == 2 || event.buttons == 4 || (event.buttons == 1 && ! vars.shift_down)) {
+    // if mouse button 2 or 3 were pressed begin move
+    if (vars.tool.type == "move" || event.buttons == 2 || event.buttons == 4) {
         vars.drag_start = [...vars.cursor_image];
+    }
+    // else if mouse button 1 is pressed without shift
+    else if (event.buttons == 1 && ! vars.shift_down) {
+        if (vars.selected_box != null) {
+            // check if the corners of the selected box were clicked
+            let box = vars.yolo[vars.selected_box]
+            let width = box[3] * vars.image_shape[0];
+            let height = box[4] * vars.image_shape[1];
+            let x1 = (box[1] * vars.image_shape[0]) - (width / 2);
+            let y1 = (box[2] * vars.image_shape[1]) - (height / 2);
+            let x2 = (box[1] * vars.image_shape[0]) + (width / 2);
+            let y2 = (box[2] * vars.image_shape[1]) + (height / 2);
+            let corners = [[x1, y1], [x1, y2], [x2, y1], [x2, y2]];
+            let canvas = document.getElementsByClassName("view-canvas")[0];
+            let ctx = canvas.getContext('2d');
+            console.log("checking corners")
+            for (let i=0; i<corners.length; i++) {
+                corner = corners[i]
+                if (distance(vars.cursor_image[0], vars.cursor_image[1], corner[0], corner[1]) <= 10 / ctx.getTransform()["a"]) {
+                    hit_corner = true;
+                    console.log("corner " + i + " hit")
+                    vars.resizing_corner = i;
+                    vars.box_start = [x1, y1];
+                    vars.box_end = [x2, y2];
+                    break;
+                }
+            }
+            if (! hit_corner) {
+                vars.drag_start = [...vars.cursor_image];
+            }
+        }
+        else {
+            vars.drag_start = [...vars.cursor_image];
+        }
     }
     // else, if mouse button 1 is pressed with shift and bounding_box tool is selected start box
     else if (event.buttons == 1 && vars.shift_down && vars.tool.type == "bbox") {
@@ -486,7 +542,7 @@ function mouse_down(event){
                 break;
             }
         }
-        if (! hit_box) {
+        if (! hit_box && ! hit_corner) {
             vars.selected_box = null;
         }
         render_selected();
@@ -498,7 +554,10 @@ function mouse_up(event){
     vars.drag_start = null;
     vars.box_start = null;
     vars.box_end = null;
+    vars.resizing_corner = null;
     render_preview();
+    render_selected();
+    render_mask();
 }
 
 function mouse_enter(event){
@@ -787,7 +846,7 @@ function draw_box_to_mask(x_start, x_end, y_start, y_end, override_class=null) {
     */
 
     let class_id;
-    if (override_class) {
+    if (override_class != null) {
         class_id = override_class;
     } else {
         class_id = vars.current_class;
@@ -862,7 +921,23 @@ function create_bounding_box() {
         let y0 = Math.min(vars.box_start[1], vars.box_end[1]);
         let y1 = Math.max(vars.box_start[1], vars.box_end[1]);
 
-        draw_box_to_mask(x0, x1, y0, y1)
+        let class_id;
+        console.log(vars.selected_box)
+        // if resizing an existing box, get its class from the YOLO list and erase its old area from the mask
+        if (vars.resizing_corner != null) {
+            class_id = vars.yolo[vars.selected_box][0] + 1
+            let old_width = vars.yolo[vars.selected_box][3] * vars.image_shape[0];
+            let old_height = vars.yolo[vars.selected_box][4] * vars.image_shape[1];
+            let old_x = (vars.yolo[vars.selected_box][1] * vars.image_shape[0]) - (old_width / 2);
+            let old_y = (vars.yolo[vars.selected_box][2] * vars.image_shape[1]) - (old_height / 2);
+            draw_box_to_mask(old_x, old_x+old_width, old_y, old_y+old_height, 0)
+        }
+        // else if creating a new box its class is the currently selected class
+        else {
+            class_id = vars.current_class
+        }
+
+        draw_box_to_mask(x0, x1, y0, y1, class_id)
 
         let width = (x1-x0) / vars.image_shape[0];
         let height = (y1-y0) / vars.image_shape[1];
@@ -871,7 +946,17 @@ function create_bounding_box() {
 
         let box_area = [x, y, width, height];
 
-        if (vars.current_class > 0) vars.yolo.push([vars.current_class - 1, ...box_area]);
+        console.log(vars.yolo)
+        // if resizing a box, replace its entry in the YOLO list
+        if (vars.resizing_corner != null) {
+            console.log("changing yolo data to " + [class_id-1, ...box_area])
+            vars.yolo[vars.selected_box] = [class_id-1, ...box_area]
+        }
+        // else, its a new box, add a new entry to the YOLO list
+        else {
+            if (vars.current_class > 0) vars.yolo.push([vars.current_class - 1, ...box_area]);
+        }
+        console.log(vars.yolo)
 
         // Part of the history (undo-redo) system. When new pixels are drawn, we
         // delete all saved future elements in the history stack and add the
