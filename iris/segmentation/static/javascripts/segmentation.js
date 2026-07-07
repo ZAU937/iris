@@ -1514,6 +1514,14 @@ function dialogue_before_next_image_save_and_continue(action_id){
 
 function save_mask(call_afterwards=null){
     show_message('Saving mask...');
+    let dialogue_content = "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center;'>" +
+        "<img src='"+vars.url.segmentation+"/static/icons/loading.gif' />" +
+        "</div>" +
+        "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center; margin-top: 20px;'>" +
+        "<div>Please Wait...</div>" +
+        "</div>"
+    show_dialogue("info", dialogue_content, true, "Saving Mask...");
+
     // Do not save any masks if they have not been loaded yet
     let abort_save = false;
     if (vars.mask === null
@@ -1554,6 +1562,7 @@ async function save_mask_finished(response, call_afterwards){
     fetch_server_update();
 
     if (response.status === 200) {
+        hide_dialogue();
         show_message('Mask saved', 1000);
         if(call_afterwards !== null){
             console.log("calling after mask")
@@ -1570,6 +1579,14 @@ async function save_mask_finished(response, call_afterwards){
 
 async function save_yolo(call_afterwards=null) {
     show_message('Saving YOLO file...');
+    let dialogue_content = "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center;'>" +
+        "<img src='"+vars.url.segmentation+"/static/icons/loading.gif' />" +
+        "</div>" +
+        "<div style='display:flex; flex-direction: row; justify-content: center; align-items: center; margin-top: 20px;'>" +
+        "<div>Please Wait...</div>" +
+        "</div>"
+    show_dialogue("info", dialogue_content, true, "Saving YOLO...");
+    
     console.log(vars.yolo, vars.modified)
     if (vars.yolo === null || ! vars.modified){
         console.log("SKIPPING")
@@ -1595,6 +1612,7 @@ async function save_yolo_finished(response, call_afterwards){
     fetch_server_update();
 
     if (response.status === 200) {
+        hide_dialogue();
         show_message('YOLO file saved', 1000);
         if(call_afterwards !== null){
             console.log("calling after yolo")
