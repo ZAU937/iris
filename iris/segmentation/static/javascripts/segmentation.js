@@ -498,6 +498,7 @@ function mouse_down(event){
                     vars.resizing_corner = i;
                     vars.box_start = [x0, y0];
                     vars.box_end = [x1, y1];
+                    vars.box_before_resizing = vars.yolo[vars.selected_box]
                     break;
                 }
             }
@@ -520,7 +521,7 @@ function mouse_down(event){
     }
 
     // check if a bounding box was clicked
-    if (vars.tool.type == "bbox" && (event.buttons == 1 && ! vars.shift_down)) {
+    if (vars.tool.type == "bbox" && (event.buttons == 1 && ! vars.shift_down) && ! hit_corner) {
         let mouse_x = vars.cursor_image[0]
         let mouse_y = vars.cursor_image[1]
         let hit_box = false;
@@ -532,6 +533,8 @@ function mouse_down(event){
             if (mouse_x >= x && mouse_x <= x+width && mouse_y >= y && mouse_y <= y+height) {
                 vars.selected_box = i;
                 hit_box = true;
+                // draw selected box "on top" of other boxes
+                draw_yolo_to_mask(vars.yolo[i])
                 break;
             }
         }
@@ -875,6 +878,52 @@ function draw_box_to_mask(x_start, x_end, y_start, y_end, override_class=null) {
     update_drawn_pixels();
 }
 
+function draw_yolo_to_mask(yolo_array, override_class=null) {
+    /*Takes a box in the YOLO format and draws it to the mask*/
+    if (override_class == null) {
+        override_class = yolo_array[0] + 1;
+    }
+    let width = yolo_array[3] * vars.image_shape[0];
+    let height = yolo_array[4] * vars.image_shape[1];
+    let x = (yolo_array[1] * vars.image_shape[0]) - (width / 2);
+    let y = (yolo_array[2] * vars.image_shape[1]) - (height / 2);
+    draw_box_to_mask(x, x+width, y, y+height, override_class);
+}
+
+function draw_all_boxes() {
+    /* re-draw every box in vars.yolo (quite slow if there's >10 boxes!) */
+    for (let i=0; i<vars.yolo.length; i++) {
+        if (i != vars.selected_box) draw_yolo_to_mask(vars.yolo[i])
+    }
+    // re-draw selected box last to ensure it's "on top"
+    if (vars.selected_box != null) draw_yolo_to_mask(vars.yolo[vars.selected_box])
+}
+
+function draw_all_overlapping_boxes(target_box, draw_target_last=true) {
+    /* re-draw all boxes in vars.yolo which are overlapped by the given box
+    target_box: only re-draw boxes overlapping this, given in YOLO format
+    draw_target_last: if true draws the provided target_box after drawing all the overlapped boxes
+    */
+    let target_x0 = target_box[1] - (target_box[3] / 2);
+    let target_y0 = target_box[2] - (target_box[4] / 2);
+    let target_x1 = target_box[1] + (target_box[3] / 2);
+    let target_y1 = target_box[2] + (target_box[4] / 2);
+    for (let i=0; i<vars.yolo.length; i++) {
+        yolo_array = vars.yolo[i];
+        let x0 = yolo_array[1] - (yolo_array[3] / 2);
+        let y0 = yolo_array[2] - (yolo_array[4] / 2);
+        let x1 = yolo_array[1] + (yolo_array[3] / 2);
+        let y1 = yolo_array[2] + (yolo_array[4] / 2);
+        if (i != vars.selected_box && yolo_array != target_box &&
+            (  ((x0 >= target_x0 && x0 <= target_x1 || x1 >= target_x0 && x1 <= target_x1) && ((target_y0 >= y0 && target_y0 <= y1) || (target_y1 >= y0 && target_y1 <= y1)))
+            || ((y0 >= target_y0 && y0 <= target_y1 || y1 >= target_y0 && y1 <= target_y1) && ((target_x0 >= x0 && target_x0 <= x1) || (target_x1 >= x0 && target_x1 <= x1)))
+            || (x0 >= target_x0 && x0 <= target_x1 && x1 >= target_x0 && x1 <= target_x1 && y0 >= target_y0 && y0 <= target_y1 && y1 >= target_y0 && y1 <= target_y1))) {
+                draw_yolo_to_mask(yolo_array);
+            }
+    }
+    if (draw_target_last) draw_yolo_to_mask(target_box)
+}
+
 function user_draws_on_mask(){
     /*The user draws to the mask*/
 
@@ -911,11 +960,7 @@ function create_bounding_box() {
         // if resizing an existing box, get its class from the YOLO list and erase its old area from the mask
         if (vars.resizing_corner != null) {
             class_id = vars.yolo[vars.selected_box][0] + 1
-            let old_width = vars.yolo[vars.selected_box][3] * vars.image_shape[0];
-            let old_height = vars.yolo[vars.selected_box][4] * vars.image_shape[1];
-            let old_x = (vars.yolo[vars.selected_box][1] * vars.image_shape[0]) - (old_width / 2);
-            let old_y = (vars.yolo[vars.selected_box][2] * vars.image_shape[1]) - (old_height / 2);
-            draw_box_to_mask(old_x, old_x+old_width, old_y, old_y+old_height, 0)
+            draw_yolo_to_mask(vars.yolo[vars.selected_box], 0)
         }
         // else if creating a new box its class is the currently selected class
         else {
@@ -934,6 +979,9 @@ function create_bounding_box() {
         // if resizing a box, replace its entry in the YOLO list
         if (vars.resizing_corner != null) {
             vars.yolo[vars.selected_box] = [class_id-1, ...box_area]
+            draw_all_overlapping_boxes(vars.box_before_resizing, false)
+            draw_yolo_to_mask(vars.yolo[vars.selected_box])
+            vars.box_before_resizing = null;
         }
         // else, its a new box, add a new entry to the YOLO list
         else {
