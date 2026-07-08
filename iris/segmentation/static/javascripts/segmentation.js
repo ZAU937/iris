@@ -431,17 +431,33 @@ function mouse_move(event){
     update_cursor_coords(this, event);
 
     // if move has been started (this means the mouse button and shift key checks are already done)
-    if (vars.drag_start !== null) {
+    if (vars.drag_start !== null && vars.box_end == null) {
         move(
             vars.cursor_image[0]-vars.drag_start[0],
             vars.cursor_image[1]-vars.drag_start[1]
         );
     }
+    // else if resizing has been started
+    else if (vars.resizing_corner != null) {
+        if (vars.resizing_corner == 0) {
+            vars.box_start = [...vars.cursor_image];
+        }
+        else if (vars.resizing_corner == 1) {
+            vars.box_start = [vars.cursor_image[0], vars.box_start[1]];
+            vars.box_end = [vars.box_end[0], vars.cursor_image[1]];
+        }
+        else if (vars.resizing_corner == 2) {
+            vars.box_start = [vars.box_start[0], vars.cursor_image[1]];
+            vars.box_end = [vars.cursor_image[0], vars.box_end[1]];
+        }
+        else if (vars.resizing_corner == 3) {
+            vars.box_end = [...vars.cursor_image];
+        }
+    }
     // mouse left button must be pressed to draw
     else if (event.buttons == 1 && vars.tool.type != 'move'){
         if (vars.tool.type == "bbox") {
             vars.box_end = [...vars.cursor_image];
-            update_bounding_box();
         }
         else {
             vars.box_end = null;
@@ -455,10 +471,44 @@ function mouse_move(event){
 
 function mouse_down(event){
     update_cursor_coords(this, event);
+    let hit_corner = false;
 
-    // if mouse button 2 or 3 were pressed (or mb1 + shift) begin move
-    if (vars.tool.type == "move" || event.buttons == 2 || event.buttons == 4 || (event.buttons == 1 && ! vars.shift_down)) {
+    // if mouse button 2 or 3 were pressed begin move
+    if (vars.tool.type == "move" || event.buttons == 2 || event.buttons == 4) {
         vars.drag_start = [...vars.cursor_image];
+    }
+    // else if mouse button 1 is pressed without shift
+    else if (event.buttons == 1 && ! vars.shift_down) {
+        if (vars.selected_box != null) {
+            // check if the corners of the selected box were clicked
+            let box = vars.yolo[vars.selected_box]
+            let width = box[3] * vars.image_shape[0];
+            let height = box[4] * vars.image_shape[1];
+            let x0 = (box[1] * vars.image_shape[0]) - (width / 2);
+            let y0 = (box[2] * vars.image_shape[1]) - (height / 2);
+            let x1 = (box[1] * vars.image_shape[0]) + (width / 2);
+            let y1 = (box[2] * vars.image_shape[1]) + (height / 2);
+            let corners = [[x0, y0], [x0, y1], [x1, y0], [x1, y1]];
+            let canvas = document.getElementsByClassName("view-canvas")[0];
+            let ctx = canvas.getContext('2d');
+            for (let i=0; i<corners.length; i++) {
+                corner = corners[i]
+                if (distance(vars.cursor_image[0], vars.cursor_image[1], corner[0], corner[1]) <= 10 / ctx.getTransform()["a"]) {
+                    hit_corner = true;
+                    vars.resizing_corner = i;
+                    vars.box_start = [x0, y0];
+                    vars.box_end = [x1, y1];
+                    vars.box_before_resizing = vars.yolo[vars.selected_box]
+                    break;
+                }
+            }
+            if (! hit_corner) {
+                vars.drag_start = [...vars.cursor_image];
+            }
+        }
+        else {
+            vars.drag_start = [...vars.cursor_image];
+        }
     }
     // else, if mouse button 1 is pressed with shift and bounding_box tool is selected start box
     else if (event.buttons == 1 && vars.shift_down && vars.tool.type == "bbox") {
@@ -471,7 +521,7 @@ function mouse_down(event){
     }
 
     // check if a bounding box was clicked
-    if (vars.tool.type == "bbox" && (event.buttons == 1 && ! vars.shift_down)) {
+    if (vars.tool.type == "bbox" && (event.buttons == 1 && ! vars.shift_down) && ! hit_corner) {
         let mouse_x = vars.cursor_image[0]
         let mouse_y = vars.cursor_image[1]
         let hit_box = false;
@@ -483,10 +533,12 @@ function mouse_down(event){
             if (mouse_x >= x && mouse_x <= x+width && mouse_y >= y && mouse_y <= y+height) {
                 vars.selected_box = i;
                 hit_box = true;
+                // draw selected box "on top" of other boxes
+                draw_yolo_to_mask(vars.yolo[i])
                 break;
             }
         }
-        if (! hit_box) {
+        if (! hit_box && ! hit_corner) {
             vars.selected_box = null;
         }
         render_selected();
@@ -498,7 +550,10 @@ function mouse_up(event){
     vars.drag_start = null;
     vars.box_start = null;
     vars.box_end = null;
+    vars.resizing_corner = null;
     render_preview();
+    render_selected();
+    render_mask();
 }
 
 function mouse_enter(event){
@@ -787,7 +842,7 @@ function draw_box_to_mask(x_start, x_end, y_start, y_end, override_class=null) {
     */
 
     let class_id;
-    if (override_class) {
+    if (override_class != null) {
         class_id = override_class;
     } else {
         class_id = vars.current_class;
@@ -823,6 +878,53 @@ function draw_box_to_mask(x_start, x_end, y_start, y_end, override_class=null) {
     update_drawn_pixels();
 }
 
+function draw_yolo_to_mask(yolo_array, override_class=null) {
+    /*Takes a box in the YOLO format and draws it to the mask*/
+    if (override_class == null) {
+        override_class = yolo_array[0] + 1;
+    }
+    let width = yolo_array[3] * vars.image_shape[0];
+    let height = yolo_array[4] * vars.image_shape[1];
+    let x = (yolo_array[1] * vars.image_shape[0]) - (width / 2);
+    let y = (yolo_array[2] * vars.image_shape[1]) - (height / 2);
+    draw_box_to_mask(x, x+width, y, y+height, override_class);
+}
+
+function draw_all_boxes() {
+    /* re-draw every box in vars.yolo (quite slow if there's >10 boxes!) */
+    for (let i=0; i<vars.yolo.length; i++) {
+        if (i != vars.selected_box) draw_yolo_to_mask(vars.yolo[i])
+    }
+    // re-draw selected box last to ensure it's "on top"
+    if (vars.selected_box != null) draw_yolo_to_mask(vars.yolo[vars.selected_box])
+}
+
+function draw_all_overlapping_boxes(target_box, draw_target_last=true) {
+    /* re-draw all boxes in vars.yolo which are overlapped by the given box
+    target_box: only re-draw boxes overlapping this, given in YOLO format
+    draw_target_last: if true draws the provided target_box after drawing all the overlapped boxes
+    */
+    let target_x0 = target_box[1] - (target_box[3] / 2);
+    let target_y0 = target_box[2] - (target_box[4] / 2);
+    let target_x1 = target_box[1] + (target_box[3] / 2);
+    let target_y1 = target_box[2] + (target_box[4] / 2);
+    // console.log(target_x0, target_y0, target_x1, target_y1)
+    for (let i=0; i<vars.yolo.length; i++) {
+        yolo_array = vars.yolo[i];
+        let x0 = yolo_array[1] - (yolo_array[3] / 2);
+        let y0 = yolo_array[2] - (yolo_array[4] / 2);
+        let x1 = yolo_array[1] + (yolo_array[3] / 2);
+        let y1 = yolo_array[2] + (yolo_array[4] / 2);
+        if (i != vars.selected_box && yolo_array != target_box &&
+            (  ((x0 >= target_x0 && x0 <= target_x1 || x1 >= target_x0 && x1 <= target_x1) && ((target_y0 >= y0 && target_y0 <= y1) || (target_y1 >= y0 && target_y1 <= y1)))
+            || ((y0 >= target_y0 && y0 <= target_y1 || y1 >= target_y0 && y1 <= target_y1) && ((target_x0 >= x0 && target_x0 <= x1) || (target_x1 >= x0 && target_x1 <= x1)))
+            || (x0 >= target_x0 && x0 <= target_x1 && x1 >= target_x0 && x1 <= target_x1 && y0 >= target_y0 && y0 <= target_y1 && y1 >= target_y0 && y1 <= target_y1))) {
+                draw_yolo_to_mask(yolo_array);
+            }
+    }
+    if (draw_target_last) draw_yolo_to_mask(target_box)
+}
+
 function user_draws_on_mask(){
     /*The user draws to the mask*/
 
@@ -844,13 +946,6 @@ function user_draws_on_mask(){
     vars.modified = true;
 }
 
-function update_bounding_box() {
-    let coords = get_canvas_coordinates();
-    let x_start = coords[0]
-    let y_start = coords[2]
-    vars.box_end = [x_start, y_start]
-}
-
 function create_bounding_box() {
     /*Add bounding box to mask*/
 
@@ -862,7 +957,18 @@ function create_bounding_box() {
         let y0 = Math.min(vars.box_start[1], vars.box_end[1]);
         let y1 = Math.max(vars.box_start[1], vars.box_end[1]);
 
-        draw_box_to_mask(x0, x1, y0, y1)
+        let class_id;
+        // if resizing an existing box, get its class from the YOLO list and erase its old area from the mask
+        if (vars.resizing_corner != null) {
+            class_id = vars.yolo[vars.selected_box][0] + 1
+            draw_yolo_to_mask(vars.yolo[vars.selected_box], 0)
+        }
+        // else if creating a new box its class is the currently selected class
+        else {
+            class_id = vars.current_class
+        }
+
+        draw_box_to_mask(x0, x1, y0, y1, class_id)
 
         let width = (x1-x0) / vars.image_shape[0];
         let height = (y1-y0) / vars.image_shape[1];
@@ -871,7 +977,17 @@ function create_bounding_box() {
 
         let box_area = [x, y, width, height];
 
-        if (vars.current_class > 0) vars.yolo.push([vars.current_class - 1, ...box_area]);
+        // if resizing a box, replace its entry in the YOLO list
+        if (vars.resizing_corner != null) {
+            vars.yolo[vars.selected_box] = [class_id-1, ...box_area]
+            draw_all_overlapping_boxes(vars.box_before_resizing, false)
+            draw_yolo_to_mask(vars.yolo[vars.selected_box])
+            vars.box_before_resizing = null;
+        }
+        // else, its a new box, add a new entry to the YOLO list
+        else {
+            if (vars.current_class > 0) vars.yolo.push([vars.current_class - 1, ...box_area]);
+        }
 
         // Part of the history (undo-redo) system. When new pixels are drawn, we
         // delete all saved future elements in the history stack and add the
@@ -1043,6 +1159,7 @@ function delete_bounding_box() {
     }
     var hidden_ctx = vars.hidden_mask.getContext('2d');
     hidden_ctx.clearRect(...extended_area);
+    draw_all_overlapping_boxes(vars.yolo[vars.selected_box], false)
     render_mask(extended_area);
     vars.yolo.splice(vars.selected_box, 1);
     vars.selected_box = null;
