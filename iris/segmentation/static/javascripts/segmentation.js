@@ -431,7 +431,7 @@ function mouse_move(event){
     update_cursor_coords(this, event);
 
     // if move has been started (this means the mouse button and shift key checks are already done)
-    if (vars.drag_start !== null) {
+    if (vars.drag_start !== null && vars.box_end == null) {
         move(
             vars.cursor_image[0]-vars.drag_start[0],
             vars.cursor_image[1]-vars.drag_start[1]
@@ -463,6 +463,10 @@ function mouse_move(event){
             vars.box_end = null;
             user_draws_on_mask();
         }
+    }
+
+    if (vars.box_end != null) {
+        vars.box_end = [...vars.cursor_image];
     }
 
     // Show a preview of the pencil:
