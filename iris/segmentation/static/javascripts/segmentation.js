@@ -465,10 +465,6 @@ function mouse_move(event){
         }
     }
 
-    if (vars.box_end != null) {
-        vars.box_end = [...vars.cursor_image];
-    }
-
     // Show a preview of the pencil:
     render_preview();
 }
@@ -918,6 +914,9 @@ function draw_all_overlapping_boxes(target_box, draw_target_last=true) {
         let y0 = yolo_array[2] - (yolo_array[4] / 2);
         let x1 = yolo_array[1] + (yolo_array[3] / 2);
         let y1 = yolo_array[2] + (yolo_array[4] / 2);
+        console.log((  ((x0 >= target_x0 && x0 <= target_x1 || x1 >= target_x0 && x1 <= target_x1) && ((target_y0 >= y0 && target_y0 <= y1) || (target_y1 >= y0 && target_y1 <= y1)))
+            || ((y0 >= target_y0 && y0 <= target_y1 || y1 >= target_y0 && y1 <= target_y1) && ((target_x0 >= x0 && target_x0 <= x1) || (target_x1 >= x0 && target_x1 <= x1)))
+            || (x0 >= target_x0 && x0 <= target_x1 && x1 >= target_x0 && x1 <= target_x1 && y0 >= target_y0 && y0 <= target_y1 && y1 >= target_y0 && y1 <= target_y1)))
         if (i != vars.selected_box && yolo_array != target_box &&
             (  ((x0 >= target_x0 && x0 <= target_x1 || x1 >= target_x0 && x1 <= target_x1) && ((target_y0 >= y0 && target_y0 <= y1) || (target_y1 >= y0 && target_y1 <= y1)))
             || ((y0 >= target_y0 && y0 <= target_y1 || y1 >= target_y0 && y1 <= target_y1) && ((target_x0 >= x0 && target_x0 <= x1) || (target_x1 >= x0 && target_x1 <= x1)))
@@ -1160,6 +1159,7 @@ function delete_bounding_box() {
         vars.mask.fill(0, y*vars.mask_shape[0]+box_x, y*vars.mask_shape[0]+box_x+box_width)
         vars.user_mask.fill(1, y*vars.mask_shape[0]+box_x, y*vars.mask_shape[0]+box_x+box_width)
     }
+    // draw_all_overlapping_boxes([0, ...extended_area], false)
     var hidden_ctx = vars.hidden_mask.getContext('2d');
     hidden_ctx.clearRect(...extended_area);
     render_mask(extended_area);
