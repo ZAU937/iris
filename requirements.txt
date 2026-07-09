@@ -1,5 +1,5 @@
 flask==2.3.2
-flask_compress==1.13
+flask-compress==1.13
 flask-sqlalchemy==2.5.1
 numpy==1.23.4
 pyyaml>=5.4.1
