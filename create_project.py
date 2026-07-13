@@ -166,6 +166,11 @@ def main(src, dst, name, password):
     json.dump(cfg, json_file)
     json_file.close()
 
+    # save classes text file
+    classes_file = open(f"{dst}/classes.txt", "w")
+    classes_file.write("Caribou\nElk\nMoose\nPronghorn\nMountain Goat\nBison\nDeer\nAlbino Bison\nAnimal (unknown)\nMountain Sheep\nBeaver Lodge\nCattle\nHotspot")
+    classes_file.close()
+
 
     # start server and open site in browser
     try:
