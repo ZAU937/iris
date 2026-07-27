@@ -62,29 +62,19 @@ def main(src, dst, name, password):
             "colour": [255, 255, 255, 0]
             },
             {
-            "name": "Caribou",
-            "description": "Caribou",
-            "colour": [255, 36, 237, 70]
+            "name": "Albino Bison",
+            "description": "Albino Bison",
+            "colour": [176, 15, 240, 70]
             },
             {
-            "name": "Elk",
-            "description": "Elk",
-            "colour": [212, 56, 13, 70]
+            "name": "Animal (unknown)",
+            "description": "Animal of unknown or unlisted type",
+            "colour": [255, 163, 158, 70]
             },
             {
-            "name": "Moose",
-            "description": "Moose",
-            "colour": [255, 149, 0, 70]
-            },
-            {
-            "name": "Pronghorn",
-            "description": "Pronghorn",
-            "colour": [173, 139, 0, 70]
-            },
-            {
-            "name": "Mountain Goat",
-            "description": "Mountain Goat",
-            "colour": [211, 242, 97, 70]
+            "name": "Beaver Lodge",
+            "description": "Beaver Lodge (NOT dam)",
+            "colour": [177, 142, 114, 70]
             },
             {
             "name": "Bison",
@@ -92,29 +82,9 @@ def main(src, dst, name, password):
             "colour": [142, 96, 251, 70]
             },
             {
-            "name": "Deer",
-            "description": "Deer",
-            "colour": [51, 102, 255, 70]
-            },
-            {
-            "name": "Albino Bison",
-            "description": "Albino Bison",
-            "colour": [176, 15, 240, 70]
-            },
-            {
-            "name": "Animal (unknown)",
-            "description": "various unidentified animal types",
-            "colour": [255, 163, 158, 70]
-            },
-            {
-            "name": "Mountain Sheep",
-            "description": "Mountain Sheep",
-            "colour": [0, 158, 11, 70]
-            },
-            {
-            "name": "Beaver Lodge",
-            "description": "Beaver Lodge",
-            "colour": [177, 142, 114, 70]
+            "name": "Caribou",
+            "description": "Caribou",
+            "colour": [255, 36, 237, 70]
             },
             {
             "name": "Cattle",
@@ -122,9 +92,39 @@ def main(src, dst, name, password):
             "colour": [244, 191, 248, 70]
             },
             {
+            "name": "Deer",
+            "description": "Deer",
+            "colour": [51, 102, 255, 70]
+            },
+            {
+            "name": "Elk",
+            "description": "Elk",
+            "colour": [212, 56, 13, 70]
+            },
+            {
             "name": "Hotspot",
             "description": "Hotspots identified by the alignment and hotspot detection software (these do not need to be manually annotated)",
             "colour": [63, 196, 81, 70]
+            },
+            {
+            "name": "Moose",
+            "description": "Moose",
+            "colour": [255, 149, 0, 70]
+            },
+            {
+            "name": "Mountain Goat",
+            "description": "Mountain Goat",
+            "colour": [211, 242, 97, 70]
+            },
+            {
+            "name": "Mountain Sheep",
+            "description": "Mountain Sheep",
+            "colour": [0, 158, 11, 70]
+            },
+            {
+            "name": "Pronghorn",
+            "description": "Pronghorn",
+            "colour": [173, 139, 0, 70]
             },
         ],
         "views": {
