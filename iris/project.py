@@ -144,7 +144,7 @@ class Project:
         os.makedirs(join(self['path'], 'user_config'), exist_ok=True)
 
         # Make all paths absolute:
-        self['images']['path'] = self.make_absolute(self['images']['path'])
+        #self['images']['path'] = self.make_absolute(self['images']['path']) # disabled for now
         self['images']['thumbnails'] = self.make_absolute(
             self['images'].get('thumbnails', False)
         )
