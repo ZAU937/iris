@@ -168,7 +168,7 @@ def main(src, dst, name, password):
 
     # save classes text file
     classes_file = open(f"{dst}/classes.txt", "w")
-    classes_file.write("Caribou\nElk\nMoose\nPronghorn\nMountain Goat\nBison\nDeer\nAlbino Bison\nAnimal (unknown)\nMountain Sheep\nBeaver Lodge\nCattle\nHotspot")
+    classes_file.write("Albino Bison\nAnimal (unknown)\nBeaver Lodge\nBison\nCaribou\nCattle\nDeern\nElk\nHotspot\nMoose\nMountain Goat\nMountain Sheep\nPronghorn")
     classes_file.close()
 
 
