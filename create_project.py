@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import platform
+import shutil
 import subprocess
 import time
 import webbrowser
@@ -20,7 +21,7 @@ def prompt_user_y_n(message):
     return answer
 
 
-def main(src, dst, name, password):
+def main(src, dst, name, password, yolo_path=None):
     width = 4096
     height = 3000
 
@@ -172,6 +173,20 @@ def main(src, dst, name, password):
     classes_file.close()
 
 
+    # copy YOLO files (if provided)
+    if yolo_path:
+        yolo_files = os.listdir(yolo_path)
+        yolo_dst = os.path.join(dst, "YOLO")
+        if not os.path.exists(yolo_dst):
+            os.makedirs(yolo_dst)
+            for file in yolo_files:
+                if not file.startswith("LABELS"):
+                    new_file = "LABELS_" + file
+                else:
+                    new_file = file
+                shutil.copy2(os.path.join(yolo_path, file), os.path.join(yolo_dst, new_file))
+
+
     # start server and open site in browser
     try:
         p = subprocess.Popen(["iris", "-ap", password, "label", json_path], text=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -192,9 +207,10 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--destination", help="path to folder to hold config file and generated YOLO files")
     parser.add_argument("-n", "--project_name", help="OPTIONAL: unique name for the project, If not provided uses final directory name in images_path")
     parser.add_argument("-ap", "--admin_password", help="OPTIONAL: password to use for admin account when starting a new project, default: 'password'", default="password")
+    parser.add_argument("-y", "--yolo_path", help="OPTIONAL: path to existing YOLO annotations to add to the project")
     args = parser.parse_args()
     if args.project_name:
         name = args.project_name
     else:
         name = os.path.basename(os.path.normpath(args.images_path))
-    main(args.images_path, args.destination, name, args.admin_password)
+    main(args.images_path, args.destination, name, args.admin_password, args.yolo_path)

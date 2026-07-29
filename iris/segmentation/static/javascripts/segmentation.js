@@ -178,6 +178,9 @@ async function init_views(){
     //load YOLO file
     await load_yolo();
 
+    // ensure all boxes are drawn to canvas
+    draw_all_boxes();
+
     // Part of the history (undo-redo) system. When new pixels are drawn, we
     // delete all saved future elements in the history stack and add the
     // current masks to the history
