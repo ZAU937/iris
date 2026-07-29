@@ -21,10 +21,7 @@ def prompt_user_y_n(message):
     return answer
 
 
-def main(src, dst, name, password, yolo_path=None):
-    width = 4096
-    height = 3000
-
+def main(src, dst, name, password, width, height, yolo_path=None):
     current_os = platform.system()
     if current_os == "Linux": separator = "/"
     elif current_os == "Windows": separator = "\\"
@@ -207,10 +204,12 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--destination", help="path to folder to hold config file and generated YOLO files")
     parser.add_argument("-n", "--project_name", help="OPTIONAL: unique name for the project, If not provided uses final directory name in images_path")
     parser.add_argument("-ap", "--admin_password", help="OPTIONAL: password to use for admin account when starting a new project, default: 'password'", default="password")
+    parser.add_argument("-iw", "--image_width", default=4096, help="width of the images in pixels", type=int)
+    parser.add_argument("-ih", "--image_height", default=3000, help="height of the images in pixels", type=int)
     parser.add_argument("-y", "--yolo_path", help="OPTIONAL: path to existing YOLO annotations to add to the project")
     args = parser.parse_args()
     if args.project_name:
         name = args.project_name
     else:
         name = os.path.basename(os.path.normpath(args.images_path))
-    main(args.images_path, args.destination, name, args.admin_password, args.yolo_path)
+    main(args.images_path, args.destination, name, args.admin_password, args.image_width, args.image_height, args.yolo_path)
