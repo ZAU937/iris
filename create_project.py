@@ -124,6 +124,11 @@ def main(src, dst, name, password, width, height, yolo_path=None):
             "description": "Pronghorn",
             "colour": [173, 139, 0, 70]
             },
+            {
+            "name": "Horse",
+            "description": "Horse",
+            "colour": [200, 30, 20, 70]
+            },
         ],
         "views": {
             "RGB": {
