@@ -201,6 +201,8 @@ function dialogue_kill() {
     let content = `
     Are you sure you want to kill the server? All unsaved changes will be lost.
     <br>
+    The site will become unresponsive once the server is killed.
+    <br><br>
     <button style="color: red" onclick="send_kill()">Kill</button>
     <button onclick="dialogue_config()">Cancel</button>
     `;
