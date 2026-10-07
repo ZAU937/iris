@@ -1,6 +1,7 @@
 <div class="tab">
   <button class="tablinks checked" onclick="open_tab(this, 'config', 'config-segmentation-ai')">Segmentation AI</button>
   <button class="tablinks" onclick="open_tab(this, 'config', 'config-views')">Views</button>
+  <button class="tablinks" onclick="open_tab(this, 'config', 'config-system')">System</button>
 </div>
 
 <div id='config-segmentation-ai' class='iris-tabs-config tabcontent' style='display: block;'>
@@ -183,6 +184,9 @@
 </div>
 <div id='config-views' class='iris-tabs-config tabcontent'>
     Not yet implemented.
+</div>
+<div id='config-system' class='iris-tabs-config tabcontent'>
+    <button onclick="dialogue_kill();">Kill Server</button>
 </div>
 
 <p id="dc-error" class="tag red" style="display: none"></p>

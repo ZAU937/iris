@@ -196,3 +196,19 @@ function logout_finished(){
     // Don't allow no login
     dialogue_login();
 }
+
+function dialogue_kill() {
+    let content = `
+    Are you sure you want to kill the server? All unsaved changes will be lost.
+    <br>
+    <button style="color: red" onclick="send_kill()">Kill</button>
+    <button onclick="dialogue_config()">Cancel</button>
+    `;
+    show_dialogue("Warning", content, true, "Confirm")
+}
+
+async function send_kill() {
+    await fetch(vars.url.user+"kill", {
+        method: "GET"
+    })
+}

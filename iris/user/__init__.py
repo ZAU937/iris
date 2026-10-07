@@ -1,7 +1,7 @@
 from functools import wraps
 import json
-import random
-from os.path import dirname, join
+import os
+import signal
 
 import flask
 from sqlalchemy import func
@@ -207,6 +207,11 @@ def logout():
         flask.session.pop('user_id')
 
     return flask.make_response("Successful logout!")
+
+@user_app.route('/kill', methods=['GET'])
+def kill():
+    os.kill(os.getpid(), signal.SIGINT)
+    return flask.make_response("Server shutting down...")
 
 def set_current_user(user):
     flask.session['user_id'] = user.id
