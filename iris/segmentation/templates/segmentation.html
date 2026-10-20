@@ -169,10 +169,10 @@
             <img src="{{url_for('segmentation.static', filename='icons/cmap.png')}}" />
         </li>
         <li class="toolbar_separator"></li>
-        <li class="toolbutton icon_button" onclick="dialogue_help();">
+        <li class="toolbutton icon_button" id="tb_help" onclick="dialogue_help();">
             <img src={{url_for('segmentation.static', filename='icons/help.png')}} class="icon" />
         </li>
-        <li class="toolbutton icon_button" onclick="dialogue_config();">
+        <li class="toolbutton icon_button" id="tb_preferences" onclick="dialogue_config();">
             <img src={{url_for('segmentation.static', filename='icons/preferences.png')}} class="icon" />
         </li>
     </ul>

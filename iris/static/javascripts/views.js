@@ -44,7 +44,7 @@ class ViewManager{
             index += 1;
         }
 
-        show_message(`Group: <i>${groups[index]}</i>`);
+        show_message(`Group: <i>${groups[index]}</i>`, 3000);
         this.showGroup(groups[index]);
     }
     showGroup(group=null){

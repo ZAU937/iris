@@ -115,8 +115,13 @@ let commands = {
         "description": "Delete the selected bounding box"
     },
     "toggle_cmap": {
-        "key": "NA",
         "description": "Switch between greyscale and false colour mappings"
+    },
+    "help": {
+        "description": "Display information about the tool and how to use it"
+    },
+    "preferences": {
+        "description": "Change settings for the built-in AI or the site itself"
     }
 };
 
@@ -1649,6 +1654,8 @@ function save_mask(call_afterwards=null){
         || vars.n_user_pixels.total == 0
         || ! vars.modified
     ){
+        hide_dialogue();
+        show_message("<div style='color: red'>SAVE ERROR:</div> No mask data to save!", 3000)
         if(call_afterwards !== null){
           call_afterwards();
         }
@@ -1703,6 +1710,8 @@ async function save_yolo(call_afterwards=null) {
     show_dialogue("info", dialogue_content, true, "Saving YOLO...");
 
     if (vars.yolo === null || ! vars.modified){
+        hide_dialogue();
+        show_message("<div style='color: red'>SAVE ERROR:</div> No YOLO data to save!", 3000)
         if(call_afterwards !== null){
           call_afterwards();
         }
