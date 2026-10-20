@@ -145,11 +145,13 @@ def main(src, dst, name, password, width, height, yolo_path=None):
             "NIR": {
             "descrription": "Near Infared",
             "type": "image",
-            "data": "$NIR.B1"
+            "data": "$NIR.B1",
+            "cmap": "gray"
             }
         },
         "view_groups": {
-            "default": ["RGB", "LWIR"]
+            "default": ["RGB", "LWIR"],
+            "nir": ["RGB", "NIR"]
         },
         "segmentation": {
             "path": f"{dst}/Masks/MASK_{{id}}.png",

@@ -107,7 +107,7 @@ let commands = {
         "description":"Toggle display of view controls on/off"
     },
     "next_view_group": {
-        "key": "B",
+        "key": "M",
         "description": "Switch to next group view"
     },
     "delete_bounding_box": {
@@ -305,7 +305,7 @@ function key_down(event){
         dialogue_reset_mask();
     } else if (key == "KeyV"){
         vars.vm.toggleControls();
-    } else if (key == "KeyB"){
+    } else if (key == "KeyM"){
         vars.vm.showNextGroup();
     } else if (key == "ShiftLeft") {
         vars.shift_down = true;
