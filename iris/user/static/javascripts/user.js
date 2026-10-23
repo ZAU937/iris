@@ -104,6 +104,14 @@ function dialogue_login(){
     <button onclick="dialogue_register();">I have no account yet</button>
 `;
     show_dialogue("info", content, true, title="Login");
+
+    // sibmit username and password when 'enter' is pressed in the password box
+    pw_box = document.getElementById("login-password");
+    pw_box.addEventListener("keyup", function(event) {
+        if (event.key == "Enter") {
+            login();
+        }
+    });
 }
 
 async function login(){
