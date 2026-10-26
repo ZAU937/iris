@@ -1357,7 +1357,7 @@ async function dialogue_image(){
 async function dialogue_choose_image() {
     let results = await download(vars.url.segmentation+"get_image_list/");
 
-    let content = "<div style='display: flex; justify-content: center;'><table>";
+    let content = "<div style='display: flex; justify-content: center;'><table class=striped>";
 
     for (let i=0; i<results.data.length; i++) {
         content += "<tr><td class='table-button' "
