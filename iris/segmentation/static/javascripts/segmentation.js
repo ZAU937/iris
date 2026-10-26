@@ -997,6 +997,9 @@ function create_bounding_box() {
             if (vars.current_class > 0) vars.yolo.push([vars.current_class - 1, ...box_area]);
         }
 
+        // ensure mask is toggled on (so you can see what you just drew)
+        show_mask(true)
+
         // Part of the history (undo-redo) system. When new pixels are drawn, we
         // delete all saved future elements in the history stack and add the
         // current masks to the history
@@ -1711,7 +1714,7 @@ async function save_yolo(call_afterwards=null) {
 
     if (vars.yolo === null || ! vars.modified){
         hide_dialogue();
-        show_message("<div style='color: red'>SAVE ERROR:</div> No YOLO data to save!", 3000)
+        show_message("<div style='color: red'>SAVE ERROR:</div> No new YOLO data to save!", 3000)
         if(call_afterwards !== null){
           call_afterwards();
         }
